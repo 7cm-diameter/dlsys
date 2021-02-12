@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 from nptyping import NDArray
@@ -56,6 +56,9 @@ class DualSysyem(object):
         self.__hkt_memory = FIFOMemory(cycle_length)
 
         self.__k = -memsize + 1
+        self.__t = 0.
+        self.__response_count = 0
+        self.__reward_count = 0
 
     @property
     def k(self) -> int:
@@ -82,6 +85,10 @@ class DualSysyem(object):
     @property
     def hk(self) -> float:
         return self.__hk
+
+    @property
+    def t(self) -> float:
+        return self.__t
 
     def update_memory(self, b: int, r: int):
         self.__behavior_memory.add(b)
@@ -125,6 +132,8 @@ class DualSysyem(object):
 
     def compute_prediction_error(self, reward: float) -> float:
         # eq. 5
+        if reward > 0:
+            self.__reward_count += 1
         return reward - (self.__hkt + self.__gk)
 
     def update_hk(self):
@@ -144,4 +153,19 @@ class DualSysyem(object):
         return p
 
     def emit_response(self, p: float) -> bool:
-        return np.random.uniform() <= p
+        response = np.random.uniform() <= p
+        self.__response_count += response
+        return response
+
+    def step(self, step_size: float):
+        self.__t += step_size
+        if self.__t >= self.__cycle_lenght:
+            b, r = self.__response_count, self.__reward_count
+            self.update_memory(b, r)
+            self.update_rk()
+            self.update_rk_bar()
+            self.update_gk()
+            self.update_hk()
+            self.__response_count = 0
+            self.__reward_count = 0
+            self.__t = 0.

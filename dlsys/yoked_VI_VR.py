@@ -40,20 +40,16 @@ def variable_interval_schedule(
     row_of_result: List[RowOfResult] = []
 
     while cumulative_reward < num_trials:
-        response_in_cycle = 0
-        reward_in_cycle = 0
         p = agent.compute_response_probability() * STEP_SIZE
         for _ in range(STEP_IN_CYCLE):
             time_since_reward += STEP_SIZE
             response = agent.emit_response(p)
 
-            response_in_cycle += response
             response_since_reward += response
 
             if time_since_reward >= interval and response:
                 rpe = agent.compute_prediction_error(1.)
 
-                reward_in_cycle += 1
                 cumulative_reward += 1
                 time_since_reward = 0.
                 required_responses.append(response_since_reward)
@@ -66,8 +62,8 @@ def variable_interval_schedule(
             else:
                 rpe = 0.
             agent.update_hkt(rpe)
+            agent.step(STEP_SIZE)
 
-        update_agent_state(agent, response_in_cycle, reward_in_cycle)
         row_of_result.append((agent.gk, agent.hk))
     result = DataFrame(row_of_result, columns=["gk", "hk"])
     return required_responses, result
@@ -82,19 +78,15 @@ def variable_ratio_schedule(agent: DualSysyem,
     row_of_result: List[RowOfResult] = []
 
     while cumulative_reward < num_trials:
-        response_in_cycle = 0
-        reward_in_cycle = 0
         p = agent.compute_response_probability() * STEP_SIZE
         for _ in range(STEP_IN_CYCLE):
             response = agent.emit_response(p)
 
-            response_in_cycle += response
             required_response -= response
 
             if required_response <= 0 and response:
                 rpe = agent.compute_prediction_error(1.)
 
-                reward_in_cycle += 1
                 cumulative_reward += 1
                 if cumulative_reward >= num_trials:
                     break
@@ -104,8 +96,8 @@ def variable_ratio_schedule(agent: DualSysyem,
             else:
                 rpe = 0.
             agent.update_hkt(rpe)
+            agent.step(STEP_SIZE)
 
-        update_agent_state(agent, response_in_cycle, reward_in_cycle)
         row_of_result.append((agent.gk, agent.hk))
     result = DataFrame(row_of_result, columns=["gk", "hk"])
     return result
