@@ -42,7 +42,7 @@ def variable_interval_schedule(
     while cumulative_reward < num_trials:
         response_in_cycle = 0
         reward_in_cycle = 0
-        p = agent.compute_response_probability()
+        p = agent.compute_response_probability() * STEP_SIZE
         for _ in range(STEP_IN_CYCLE):
             time_since_reward += STEP_SIZE
             response = agent.emit_response(p)
@@ -84,7 +84,7 @@ def variable_ratio_schedule(agent: DualSysyem,
     while cumulative_reward < num_trials:
         response_in_cycle = 0
         reward_in_cycle = 0
-        p = agent.compute_response_probability()
+        p = agent.compute_response_probability() * STEP_SIZE
         for _ in range(STEP_IN_CYCLE):
             response = agent.emit_response(p)
 
@@ -118,16 +118,16 @@ if __name__ == '__main__':
 
     # parameters for simulation
     NUM_SUBJECTS = 5
-    STEP_SIZE = 1.
+    STEP_SIZE = 1 / 3
     NUMBER_OF_TRIAL = 30
     SESSION = 10
     MEAN_INTERVAL = 15
 
     # model parameters
     THETA = .1
-    ALPHAP = .1
-    ALPHAN = .01
-    TAU = 1.
+    ALPHAP = 2 * 10**-2
+    ALPHAN = 1 * 10**-5
+    TAU = 10.
     I = 1.
     C = .6
     MEMSIZE = 5
