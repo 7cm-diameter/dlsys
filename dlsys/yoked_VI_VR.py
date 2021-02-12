@@ -29,76 +29,61 @@ RowOfResult = Tuple[float, float]  # gk, hk
 def variable_interval_schedule(
         agent: DualSysyem,
         intervals: NDArray[1, float]) -> Tuple[List[int], DataFrame]:
-    num_trials = len(intervals)
-    cumulative_reward = 0
-    time_since_reward = 0.
-    response_since_reward = 0
-    interval = intervals[cumulative_reward]
     # for yoked control
+    response_since_reward = 0
     required_responses: List[int] = []
 
     row_of_result: List[RowOfResult] = []
 
-    while cumulative_reward < num_trials:
-        p = agent.compute_response_probability() * STEP_SIZE
-        for _ in range(STEP_IN_CYCLE):
-            time_since_reward += STEP_SIZE
+    for interval in intervals:
+        response = False
+        while interval > 0 or not response:
+            p = agent.compute_response_probability() * STEP_SIZE
             response = agent.emit_response(p)
+            interval -= STEP_SIZE
 
             response_since_reward += response
 
-            if time_since_reward >= interval and response:
+            if interval <= 0. and response:
                 rpe = agent.compute_prediction_error(1.)
 
-                cumulative_reward += 1
-                time_since_reward = 0.
                 required_responses.append(response_since_reward)
                 response_since_reward = 0
-                if cumulative_reward >= num_trials:
-                    break
-                interval = intervals[cumulative_reward]
             elif response:
                 rpe = agent.compute_prediction_error(0.)
             else:
                 rpe = 0.
             agent.update_hkt(rpe)
-            agent.step(STEP_SIZE)
+            gk_hk = agent.step(STEP_SIZE)
+            if gk_hk is not None:
+                row_of_result.append(gk_hk)
 
-        row_of_result.append((agent.gk, agent.hk))
     result = DataFrame(row_of_result, columns=["gk", "hk"])
     return required_responses, result
 
 
 def variable_ratio_schedule(agent: DualSysyem,
                             required_responses: List[int]) -> DataFrame:
-    num_trials = len(required_responses)
-    cumulative_reward = 0
-    required_response = required_responses[cumulative_reward]
-
     row_of_result: List[RowOfResult] = []
 
-    while cumulative_reward < num_trials:
-        p = agent.compute_response_probability() * STEP_SIZE
-        for _ in range(STEP_IN_CYCLE):
+    for required_response in required_responses:
+        while required_response > 0:
+            p = agent.compute_response_probability() * STEP_SIZE
             response = agent.emit_response(p)
 
             required_response -= response
 
             if required_response <= 0 and response:
                 rpe = agent.compute_prediction_error(1.)
-
-                cumulative_reward += 1
-                if cumulative_reward >= num_trials:
-                    break
-                required_response = required_responses[cumulative_reward]
             elif response:
                 rpe = agent.compute_prediction_error(0.)
             else:
                 rpe = 0.
             agent.update_hkt(rpe)
-            agent.step(STEP_SIZE)
+            gk_hk = agent.step(STEP_SIZE)
+            if gk_hk is not None:
+                row_of_result.append(gk_hk)
 
-        row_of_result.append((agent.gk, agent.hk))
     result = DataFrame(row_of_result, columns=["gk", "hk"])
     return result
 

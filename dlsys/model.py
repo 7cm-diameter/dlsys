@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 from nptyping import NDArray
@@ -157,7 +157,7 @@ class DualSysyem(object):
         self.__response_count += response
         return response
 
-    def step(self, step_size: float):
+    def step(self, step_size: float) -> Optional[Tuple[float, float]]:
         self.__t += step_size
         if self.__t >= self.__cycle_lenght:
             b, r = self.__response_count, self.__reward_count
@@ -169,3 +169,5 @@ class DualSysyem(object):
             self.__response_count = 0
             self.__reward_count = 0
             self.__t = 0.
+            return self.__gk, self.__hk
+        return None
