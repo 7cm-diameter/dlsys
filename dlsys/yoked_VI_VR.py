@@ -15,14 +15,6 @@ def expon_equally_spaced(mean_interval: float, _min: float,
     return np.random.choice(intervals, size=len(intervals), replace=False)
 
 
-def update_agent_state(agent: DualSysyem, b: int, r: int):
-    agent.update_memory(b, r)
-    agent.update_rk()
-    agent.update_rk_bar()
-    agent.update_gk()
-    agent.update_hk()
-
-
 RowOfResult = Tuple[float, float]  # gk, hk
 
 
