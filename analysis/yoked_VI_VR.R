@@ -1,5 +1,5 @@
 library(tidyverse)
-
+library(ggcolors)
 
 simulation_result <- read.csv("./data/yoked_VI_VR.csv")
 
@@ -36,16 +36,4 @@ ggplot(data = grouped_result) +
        y = "response strength") +
   scale_color_manual(values = colors) +
   facet_wrap(~condition) +
-  theme(plot.background = element_rect(fill = "#161821"),
-        panel.background = element_rect(fill = "#161821"),
-        panel.grid.major = element_line(color = "#d2d4de"),
-        panel.grid.minor = element_line(color = "#d2d4de"),
-        panel.border = element_rect(color = "#d2d4de", fill = NA),
-        legend.background = element_rect(color = "#6b7089", fill = "#161821"),
-        legend.key = element_rect(fill = "#d2d4de"),
-        legend.title = element_text(color = "#d2d4de"),
-        legend.text = element_text(color = "#d2d4de"),
-        strip.background = element_rect(color = "#6b7089", fill = "#6b7089"),
-        axis.text = element_text(color = "#d2d4de"),
-        text = element_text(color = "#d2d4de")
-  )
+  theme_iceberg_dark()
