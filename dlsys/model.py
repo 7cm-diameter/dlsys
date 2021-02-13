@@ -1,3 +1,4 @@
+from math import isclose
 from typing import Any, List, Optional, Tuple
 
 import numpy as np
@@ -171,3 +172,20 @@ class DualSysyem(object):
             self.__t = 0.
             return self.__gk, self.__hk
         return None
+
+    def learn_from_dataset(self, dataset: List[Tuple[float, float]],
+                           stepsize: float):
+        row_of_result: List[Tuple[float, float]] = []
+        for irt, reward in dataset:
+            while not isclose(irt, 0., abs_tol=1e-3) and irt > 0.:
+                irt -= stepsize
+                if isclose(irt, 0, abs_tol=1e-3) or irt <= 0.:
+                    _ = self.emit_response(1.)
+                    rpe = self.compute_prediction_error(reward)
+                else:
+                    rpe = 0.
+                self.update_hkt(rpe)
+                gk_hk = self.step(stepsize)
+                if gk_hk is not None:
+                    row_of_result.append(gk_hk)
+        return row_of_result
